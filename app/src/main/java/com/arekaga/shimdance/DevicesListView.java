@@ -105,8 +105,12 @@ public class DevicesListView extends ListView {
             // if maximum number of selected items has been reached disable check box if this is not selected one
             if (mSelectedItemsCounter >= mMaxNumberOfSelectedItems && !item.selected) {
                 checkBox.setEnabled(false);
+                deviceName.setEnabled(false);
+                deviceSubscription.setEnabled(false);
             } else {
                 checkBox.setEnabled(true);
+                deviceName.setEnabled(true);
+                deviceSubscription.setEnabled(true);
             }
 
             // return view

@@ -76,7 +76,6 @@ public class FirstScreenActivity extends Activity {
     private int[] mInternalSensors;
     //endregion
 
-
     //region Bluetooth elements
     /**
      * BluetoothAdapter for BLUETOOTH access on mobile device
