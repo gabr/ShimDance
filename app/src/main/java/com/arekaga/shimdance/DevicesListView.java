@@ -121,7 +121,7 @@ public class DevicesListView extends ListView {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
             // get item position from tag
-            int position = (Integer) getTag();
+            int position = (Integer) compoundButton.getTag();
             // get item
             Item item = getItem(position);
             // save new state in item

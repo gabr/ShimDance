@@ -119,8 +119,13 @@ public class FirstScreenActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_first_screen);
+
         //setup GUI
         createGUIComponents();
+        // try to activate bluetooth adapter
+        activateBluetooth();
+        // fill devices list
+        fillDevicesList();
     }
 
     /**
@@ -183,7 +188,7 @@ public class FirstScreenActivity extends Activity {
         mDevicesListView.addBluetoothDevices(mPairedShimmerDevices);
 
         //log status
-        Log.i("FirstScreenActivity", "BLUETOOTH GUI components created.");
+        Log.i("FirstScreenActivity", "Devices list created");
     }
 
     /**
