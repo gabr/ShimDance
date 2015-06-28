@@ -4,5 +4,6 @@
     <string name="app_name">Shim Dance</string>
     <string name="StartButton">Start</string>
     <string name="EnableBluetoothButton">Enable</string>
+    <string name="action_settings">Sensor settings</string>
 
 </resources>

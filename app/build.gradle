@@ -5,7 +5,7 @@ android {
     buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "com.example.aas_base"
+        applicationId "com.arekaga.shimdance"
         minSdkVersion 10
         targetSdkVersion 10
     }

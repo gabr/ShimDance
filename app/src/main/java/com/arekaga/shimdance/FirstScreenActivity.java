@@ -7,7 +7,6 @@ import java.util.Set;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.SystemClock;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -15,12 +14,8 @@ import android.content.Intent;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.arekaga.shimdance.MultiSpinner.MultiSpinnerListener;
 
 
 /**
@@ -51,7 +46,7 @@ public class FirstScreenActivity extends Activity {
     /**
      * Devices list view
      */
-    private ListView mDevicesListView;
+    private DevicesListView mDevicesListView;
     /**
      * Information text view
      */
@@ -151,7 +146,7 @@ public class FirstScreenActivity extends Activity {
      */
     private void createGUIComponents() {
         mIsConnected = false;
-        mDevicesListView = (ListView) findViewById(R.id.DevicesListView);
+        mDevicesListView = (DevicesListView) findViewById(R.id.DevicesListView);
         mInfoTextView = (TextView) findViewById(R.id.InfoTextView);
         mStartButton = (Button) findViewById(R.id.StartButton);
         mEnableBluetoothButton = (Button) findViewById(R.id.EnableBluetoothButton);
@@ -170,8 +165,6 @@ public class FirstScreenActivity extends Activity {
         Iterator<BluetoothDevice> iter = pairedDevices.iterator();
         //initialize paired SHIMMER devices
         mPairedShimmerDevices = new ArrayList<BluetoothDevice>();
-        //initialize paired SHIMMER device names
-        mPairedShimmerDeviceNames = new ArrayList<String>();
 
         //loop over all paired devices
         while (iter.hasNext()) {
@@ -182,32 +175,12 @@ public class FirstScreenActivity extends Activity {
             //check if it is a SHIMMER sensor device
             if ((name.length() > 4) && (name.substring(0, 4).compareTo("RN42")) == 0) {
                 //add SHIMMER sensor
-                mPairedShimmerDeviceNames.add(name);
                 mPairedShimmerDevices.add(device);
             }
         }
 
-        //build multiple selection spinner
-        mSensorsMultiSpinner.setItems(mSensorsMultiSpinner, mPairedShimmerDeviceNames, "Choose device", new MultiSpinnerListener() {
-            //add selected items to the list of sampled sensors
-            public void onItemsSelected(boolean[] selected) {
-                //initialize selected SHIMMER devices, name and configurations
-                mSelectedDevices = new ArrayList<BluetoothDevice>();
-                mSelectedDeviceNames = new ArrayList<String>();
-                Iterator<BluetoothDevice> iterBlueoothDevice = mPairedShimmerDevices.iterator();
-                Iterator<String> iterString = mPairedShimmerDeviceNames.iterator();
-                //check selected data structure, used sensor -> true
-                for (int i = 0; i < selected.length; i++) {
-                    BluetoothDevice device = iterBlueoothDevice.next();
-                    String name = iterString.next();
-                    if (selected[i]) {
-                        //add SHIMMER device, name and sensor configuration
-                        mSelectedDevices.add(device);
-                        mSelectedDeviceNames.add(name);
-                    }
-                }
-            }
-        });
+        // add devices to list
+        mDevicesListView.addBluetoothDevices(mPairedShimmerDevices);
 
         //log status
         Log.i("FirstScreenActivity", "BLUETOOTH GUI components created.");
@@ -217,6 +190,7 @@ public class FirstScreenActivity extends Activity {
      * Creates components for chosen display view
      */
     public void setDisplayMode() {
+        /*
         //if display view is not present create it
         if (mDisplayView == null) {
             //initialize object for displaying
@@ -256,6 +230,7 @@ public class FirstScreenActivity extends Activity {
 
         //initialize display view
         mDisplayView.init();
+        */
     }
 
     /**
@@ -276,14 +251,7 @@ public class FirstScreenActivity extends Activity {
                 setDisplayMode();
                 //set connection state
                 mIsConnected = true;
-                //update button
-                mConnectShimmerButton.setChecked(true);
-                //set timer
-                mTimer.setBase(SystemClock.elapsedRealtime());
-                mTimer.start();
             } else {
-                //update button
-                mConnectShimmerButton.setChecked(false);
                 //set connection state
                 mIsConnected = false;
                 //exit
@@ -291,11 +259,8 @@ public class FirstScreenActivity extends Activity {
             }
             //CONNECTED
         } else {
-            //stop timer
-            mTimer.stop();
             //stop processing and disconnect
             mSensorDeviceManager.stopShimmer();
-            mConnectShimmerButton.setChecked(false);
             mIsConnected = false;
             Toast.makeText(this, "Processing stopped and disconnected.", Toast.LENGTH_SHORT).show();
         }
