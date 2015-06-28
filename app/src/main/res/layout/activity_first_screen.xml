@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+    android:paddingLeft="@dimen/first_screen_side_padding"
+    android:paddingRight="@dimen/first_screen_side_padding"
+    android:paddingTop="@dimen/first_screen_top_bottom_padding"
+    android:paddingBottom="@dimen/first_screen_top_bottom_padding">
+
+    <ListView
+        android:id="@+id/DevicesListView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_marginBottom="90dp"></ListView>
+
+    <TextView
+        android:id="@+id/InfoTextView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="60dp"
+        android:layout_alignParentBottom="true"/>
+	
+	<Button
+	    android:id="@+id/StartButton"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:onClick="onStartButton"
+	    android:text="@string/StartButton"
+        android:layout_alignParentBottom="true"/>
+
+    <Button
+        android:id="@+id/EnableBluetoothButton"
+        android:text="@string/EnableBluetoothButton"
+        android:drawableRight="@android:drawable/stat_sys_data_bluetooth"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:onClick="onEnableBluetoothButton"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone"/>
+				
+</RelativeLayout >

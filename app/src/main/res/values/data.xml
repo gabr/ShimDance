@@ -1,0 +1,31 @@
+<resources>
+
+    <string-array name="SamplingRates">
+        <item>  10.24 Hz</item>
+        <item>  51.2 Hz</item>
+        <item> 102.4 Hz</item>
+        <item> 128 Hz</item>
+        <item> 170.7 Hz</item>
+        <item> 204.8 Hz</item>
+        <item> 256 Hz</item>
+        <item> 512 Hz</item>
+        <item>1024 Hz</item>
+    </string-array>
+    
+    <string-array name="AccelRanges">
+        <item>1.5 G</item>
+        <item>6 G</item>
+    </string-array>
+    
+    <string-array name="DisplayModes">
+        <item>Text</item>
+        <item>GUI</item>
+    </string-array>
+    <string-array name="InternalSensors">
+        <item >Acc</item>
+        <item >Gyro</item>
+        <item >ECG</item>
+        <item >EMG</item>
+    </string-array>
+    
+</resources>
