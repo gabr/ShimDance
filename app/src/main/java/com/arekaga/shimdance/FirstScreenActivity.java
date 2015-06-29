@@ -24,6 +24,14 @@ import android.widget.Toast;
  */
 public class FirstScreenActivity extends Activity {
 
+    //region Bluetooth status enum
+
+    /**
+     * Bluetooth status
+     */
+    private enum BluetoothStatus { off, on, missing }
+    //endregion
+
     //region Request constants
     /**
      * Request code for enabling BT
@@ -59,6 +67,14 @@ public class FirstScreenActivity extends Activity {
      * Enable bluetooth button
      */
     private Button mEnableBluetoothButton;
+    /**
+     * Information that there is no bluetooth adapter
+     */
+    private TextView mNoBluetoothTextView;
+    /**
+     * Frame around list view
+     */
+    private View mFrameLayout;
     //endregion
 
     //region Current selection
@@ -99,15 +115,12 @@ public class FirstScreenActivity extends Activity {
     private ArrayList<String> mPairedShimmerDeviceNames;
     //endregion
 
+    private DisplayView mDisplayView;
+
     /**
      * Sensor device manager
      */
     private SensorDeviceManager mSensorDeviceManager;
-
-    /**
-     * View for displaying signals (TextMode/PlotMode)
-     */
-    private DisplayView mDisplayView;
 
     /**
      * Invoke createGUIComponents()
@@ -121,10 +134,19 @@ public class FirstScreenActivity extends Activity {
 
         //setup GUI
         createGUIComponents();
-        // try to activate bluetooth adapter
-        activateBluetooth();
-        // fill devices list
-        fillDevicesList();
+        // try to activate bluetooth adapter and set application according to state
+        manageBluetoothState(activateBluetooth());
+    }
+
+    /**
+     * On resume checks bluetooth status
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // check Bluetooth status
+        manageBluetoothState(activateBluetooth());
     }
 
     /**
@@ -154,6 +176,8 @@ public class FirstScreenActivity extends Activity {
         mInfoTextView = (TextView) findViewById(R.id.InfoTextView);
         mStartButton = (Button) findViewById(R.id.StartButton);
         mEnableBluetoothButton = (Button) findViewById(R.id.EnableBluetoothButton);
+        mNoBluetoothTextView = (TextView) findViewById(R.id.NoBluetoothTextView);
+        mFrameLayout = findViewById(R.id.FrameLayout);
 
         //log status
         Log.i("FirstScreenActivity", "Standard GUI components created.");
@@ -356,27 +380,82 @@ public class FirstScreenActivity extends Activity {
     /**
      * Checks Bluetooth status
      *
-     * @return 0: no BT adapter present, e.g. simulator;
-     * 1: adapter present but cannot be activated
-     * 2: adapter present
+     * @return Bluetooth status
      */
-    private int activateBluetooth() {
+    private BluetoothStatus activateBluetooth() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         //no adapter present
         if (mBluetoothAdapter == null) {
-            return 0;
+            return BluetoothStatus.missing;
         }
         //BLUETOOTH adapter active
         if (BluetoothAdapter.getDefaultAdapter().isEnabled()) {
-            return 2;
+            return BluetoothStatus.on;
         } else {
-            //trying to activate
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-            return 1;
+            return BluetoothStatus.off;
         }
     }
 
+    /**
+     * Manage GUI elements
+     * @param status current Bluetooth status
+     */
+    private void manageBluetoothState(BluetoothStatus status) {
+        switch (status) {
+            case off:
+                mInfoTextView.setVisibility(View.GONE);
+                mDevicesListView.setVisibility(View.GONE);
+                mStartButton.setVisibility(View.GONE);
+                mEnableBluetoothButton.setVisibility(View.VISIBLE);
+                mNoBluetoothTextView.setVisibility(View.GONE);
+                mFrameLayout.setVisibility(View.GONE);
+                break;
+            case on:
+                mInfoTextView.setVisibility(View.VISIBLE);
+                mDevicesListView.setVisibility(View.VISIBLE);
+                mStartButton.setVisibility(View.VISIBLE);
+                mEnableBluetoothButton.setVisibility(View.GONE);
+                mNoBluetoothTextView.setVisibility(View.GONE);
+                mFrameLayout.setVisibility(View.VISIBLE);
+                fillDevicesList(); // create corresponding GUI
+                break;
+            case missing:
+                mInfoTextView.setVisibility(View.GONE);
+                mDevicesListView.setVisibility(View.GONE);
+                mStartButton.setVisibility(View.GONE);
+                mEnableBluetoothButton.setVisibility(View.GONE);
+                mFrameLayout.setVisibility(View.GONE);
+                mNoBluetoothTextView.setVisibility(View.VISIBLE);
+                break;
+        }
+    }
+
+    /**
+     * Enable bluetooth button action
+     * @param view
+     */
+    public void onEnableBluetoothButton(View view) {
+        //trying to activate
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+    }
+
+    /**
+     * Start button action.
+     * Checks if two sensor are chosen and starts game activity
+     * @param view Calling view - start button
+     */
+    public void onStartButton(View view) {
+        // check number of selected devices
+        ArrayList<BluetoothDevice> devices = mDevicesListView.getSelectedDevices();
+        if (devices.size() != 2) {
+            Toast.makeText(this, "Select excactly two devices!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // two devices are selected so try to connect with them
+        // TODO
+    }
 
     /**
      * handles all results coming from other finished avtivities
@@ -389,7 +468,9 @@ public class FirstScreenActivity extends Activity {
         //check the right intent
         if (requestCode == REQUEST_ENABLE_BT) {
             if (resultCode == RESULT_OK) {
-                fillDevicesList();//create corresponding GUI
+                manageBluetoothState(BluetoothStatus.on);
+            } else {
+                Toast.makeText(this, "Enabling Bluetooth failed!", Toast.LENGTH_SHORT).show();
             }
         }
 

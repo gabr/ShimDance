@@ -2,7 +2,7 @@
 <resources>
 
     <dimen name="first_screen_side_padding">60dp</dimen>
-    <dimen name="first_screen_top_bottom_padding">40dp</dimen>
+    <dimen name="first_screen_top_bottom_padding">30dp</dimen>
     <dimen name="row_device_padding">10dp</dimen>
 
 </resources>
