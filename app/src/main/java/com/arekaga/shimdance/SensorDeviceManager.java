@@ -29,17 +29,13 @@ public class SensorDeviceManager {
 	//corresponding activity to display data and stuff
 	private Activity						mActivity = null;
 	//data processor
-	private ExampleDataProcessor 			mDataProcessor = null;
-	//flag to switch between recorded and live data
-	private boolean							mIsSimulating;
+	private DataProcessor                   mDataProcessor = null;
+    //on connected handler
+    private Handler                         mOnConnected = null;
 	
 	//BLUETOOTH attributes
 	private ArrayList<BluetoothDevice>		mSelectedDevices;
 	BluetoothAdapter 						mBluetoothAdapter;
-
-	//SIMULATION attributes
-	private ArrayList<InputStream>			mSelectedFiles;
-	private ArrayList<String>				mSelectedFileNames;
 
 	//time stamp management
 	private double 							mDeltaTimeStamp;
@@ -63,10 +59,12 @@ public class SensorDeviceManager {
 							   BluetoothAdapter bluetooth_adapter, 
 							   int[] internalSensors,
 							   int[] accelRanges, 
-							   double[] samplingRates, 
-							   Handler handler) {		
-		//set simulation mode
-		this.mIsSimulating = false;
+							   double[] samplingRates,
+                               double frequency,
+							   Handler handler,
+                               Handler onConnected) {
+        //set on connected handler
+        mOnConnected = onConnected;
 		//the corresponding activity to this processor
 		mActivity = activity;
 		//set selected BLUETOOTH devices
@@ -104,7 +102,7 @@ public class SensorDeviceManager {
 		mOldTimeStamp 	= 0.0;
 		mAccTimeStamp 	= 0;
 		//set data processor
-		this.mDataProcessor = new ExampleDataProcessor(handler);
+		this.mDataProcessor = new DataProcessor(handler, frequency);
 	}
 	
 	//handler for incoming live BLUETOOTH data
@@ -215,7 +213,7 @@ public class SensorDeviceManager {
 	            		break;
 	                case Shimmer.MESSAGE_TOAST:
 	                	Log.i("toast", msg.getData().getString(Shimmer.TOAST));	
-	                	Toast.makeText(mActivity.getApplicationContext(), msg.getData().getString(Shimmer.TOAST), Toast.LENGTH_SHORT).show();
+	                	//Toast.makeText(mActivity.getApplicationContext(), msg.getData().getString(Shimmer.TOAST), Toast.LENGTH_SHORT).show();
 	                	break;
 	                case Shimmer.MESSAGE_ACK_RECEIVED:
 	                	Log.i("SensorDeviceManager", "SHIMMER ack message received.");	
@@ -253,11 +251,12 @@ public class SensorDeviceManager {
 										mShimmerConnectedFlag = false;
 									}
 									if (shimmer.getShimmerState() != Shimmer.STATE_CONNECTED) {
+                                        Toast.makeText(mActivity.getApplicationContext(), "Connected to with first device", Toast.LENGTH_SHORT).show();
 										//connect the unconnected SHIMMER
 										shimmer.connect(device.getAddress(), "default");
 										Log.i("SensorDeviceManager", "Connect SHIMMER " + device.getAddress() + " .");
 										break;
-									}	
+									}
 								}
 								//all shimmer 
 								if(mShimmerConnectedFlag == true) {
@@ -267,6 +266,7 @@ public class SensorDeviceManager {
 										shimmer.startStreaming();
 										Log.i("SensorDeviceManager", "Start SHIMMER " + shimmer.getDeviceName() + " .");
 									}
+                                    mOnConnected.obtainMessage(FirstScreenActivity.CONNECTED).sendToTarget();
 								}
 							    break;
 						    case Shimmer.STATE_CONNECTING:
@@ -325,11 +325,13 @@ public class SensorDeviceManager {
         //stop streaming and disconnect SHIMMER
         Iterator<Shimmer> iter_shimmer = mShimmerDevices.iterator();
         while (iter_shimmer.hasNext()) {
-            Shimmer shimmer = iter_shimmer.next();
-            shimmer.stopStreaming();
-            Log.i("SensorDeviceManager", "Streaming stopped.");
-            shimmer.stop();
-            Log.i("SensorDeviceManager", "Disconnected.");
+            try {
+                Shimmer shimmer = iter_shimmer.next();
+                shimmer.stopStreaming();
+                Log.i("SensorDeviceManager", "Streaming stopped.");
+                shimmer.stop();
+                Log.i("SensorDeviceManager", "Disconnected.");
+            } catch (Exception e) { }
         }
 		//set SHIMEMR state
 		mShimmerConnectedFlag = false;
@@ -360,7 +362,7 @@ public class SensorDeviceManager {
 		
 	
 	//function to get data processor
-	public ExampleDataProcessor getDataProcessor() {
+	public DataProcessor getDataProcessor() {
 		return this.mDataProcessor;
 	}
 

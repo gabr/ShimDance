@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/settings_category_title_connection"
+        android:key="pref_key_category_connection" >
+
+        <ListPreference
+            android:key="settings_sampling_rate"
+            android:title="@string/settings_sampling_rate"
+            android:entries="@array/SamplingRates"
+            android:entryValues="@array/SamplingRatesValues"
+            android:defaultValue="@string/SamplingRateDefaultValue"
+            />
+
+        <ListPreference
+            android:key="settings_accel_range"
+            android:title="@string/settings_accel_range"
+            android:entries="@array/AccelRanges"
+            android:entryValues="@array/AccelRangesValues"
+            android:defaultValue="@string/AccelRangeDefaultValue"
+            />
+
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -2,18 +2,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.arekaga.shimdance"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0" > <!-- changed version from 8 to 10 -->
+    <!-- during use of new SHIMMER software version -->
+    <uses-sdk
+        android:minSdkVersion="10"
+        android:targetSdkVersion="10" />
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" >
     </uses-permission>
 
-    <!-- changed version from 8 to 10 -->
-    <!-- during use of new SHIMMER software version -->
-    <uses-sdk
-        android:minSdkVersion="10"
-        android:targetSdkVersion="10" />
+    <android:uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:allowBackup="true"
@@ -28,6 +28,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/settings"
+            android:parentActivityName=".FirstScreenActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".FirstScreenActivity" />
+        </activity>
+        <activity
+            android:name=".TracksActivity"
+            android:label="@string/app_name" >
         </activity>
     </application>
 

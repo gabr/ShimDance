@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "com.arekaga.shimdance"
-        minSdkVersion 10
-        targetSdkVersion 10
+        minSdkVersion 11
+        targetSdkVersion 11
     }
 
     buildTypes {
