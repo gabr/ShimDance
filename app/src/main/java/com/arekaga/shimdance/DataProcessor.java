@@ -1,34 +1,44 @@
 package com.arekaga.shimdance;
 
 import java.util.ArrayList;
+import java.util.Queue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 
 public class DataProcessor {
 
     //region Algorithm
-    private double mFrequency;
-    private double mYt = 8.2;
-    private double mXtl = 2.2;
-    private double mXtr = 2.2;
-    private double mZtf = 2.2;
-    private double mZtb = 2.1;
+    private static double mYt = 8.2;
+    private static double mXtl = 2.2;
+    private static double mXtr = 2.2;
+    private static double mZtf = 2.2;
+    private static double mZtb = 2.1;
+    private static double peak = 20;
 
+    private ArrayList<Double> mAccelX;
+    private ArrayList<Double> mAccelY;
+    private ArrayList<Double> mAccelZ;
+    private ArrayList<Float> mTimeStamp;
+    //endregion
+
+    //region Filter
     private int mWindowWidth;
     private int mWindowIndex;
     private int mDirectionWidth;
+    private double mFrequency;
 
     private double mFc = 0.001;
     private double mB = 0.09;
     private double mN;
+    private double mSumOfW;
     private ArrayList<Double> mArrangedN = new ArrayList<Double>();
     private ArrayList<Double> mH = new ArrayList<Double>();
     private ArrayList<Double> mW = new ArrayList<Double>();
-    private double mSumOfW;
     private ArrayList<Double> mFilter = new ArrayList<Double>();
     //endregion
 
@@ -36,9 +46,8 @@ public class DataProcessor {
     //   ATTRIBUTES   /////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    //handler for communication with the GUI
-    public static final int MESSAGE_READ = 1;
-    private final Handler m_handler;
+    //handlers
+    private static ArrayList<Handler> mHandlers = new ArrayList<Handler>();
 
     //ring buffer and processing buffer
     private CalibratedData[] m_ringBuffer;
@@ -51,17 +60,22 @@ public class DataProcessor {
     private final int RINGBUFFERSIZE = 400;
     private final int COPYSIZE = 20;
 
-    //example processing values
-    private double[] m_meanValues1 = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    private double[] m_meanValues2 = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //   METHODS   ////////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public DataProcessor(Handler handler, double frequency) {
-        //set handler for notifying the GUI
-        this.m_handler = handler;
+    public static void addHandler(Handler handler) {
+        if (handler != null)
+            mHandlers.add(handler);
+    }
+
+    public static void removeHandler(Handler handler) {
+        if (handler != null)
+            mHandlers.remove(handler);
+    }
+
+
+    public DataProcessor(double frequency) {
         //initialize ring buffer and processing buffer
         m_ringBuffer = new CalibratedData[RINGBUFFERSIZE];
         m_processingBuffer = new CalibratedData[COPYSIZE];
@@ -134,92 +148,47 @@ public class DataProcessor {
         // Keep in mind that the ring buffer may change during execution of this function! //
         // Do not modify the GUI from here!												   //
         /////////////////////////////////////////////////////////////////////////////////////
-        Log.i("ExampleDataProcessor", "extensive computations started");
-        int values1 = 0;
-        double sum_accel_x_1 = 0.0;
-        double sum_accel_y_1 = 0.0;
-        double sum_accel_z_1 = 0.0;
-        double sum_gyro_x_1 = 0.0;
-        double sum_gyro_y_1 = 0.0;
-        double sum_gyro_z_1 = 0.0;
-        double sum_ecg_1 = 0.0;
-        double sum_emg_1 = 0.0;
-        int values2 = 0;
-        double sum_accel_x_2 = 0.0;
-        double sum_accel_y_2 = 0.0;
-        double sum_accel_z_2 = 0.0;
-        double sum_gyro_x_2 = 0.0;
-        double sum_gyro_y_2 = 0.0;
-        double sum_gyro_z_2 = 0.0;
-        double sum_ecg_2 = 0.0;
-        double sum_emg_2 = 0.0;
+
         //lock to prevent parallel access to processing buffer and mean values
         m_dataLock.lock();
-        //sum up the values on processing buffer for every sensor
+
+        CalibratedData[] output = new CalibratedData[2];
+
         for (int i = 0; i < COPYSIZE; i++) {
-            if (m_processingBuffer[i].id == 0) {
-                values1++;
-                sum_accel_x_1 = sum_accel_x_1 + m_processingBuffer[i].accelX;
-                sum_accel_y_1 = sum_accel_y_1 + m_processingBuffer[i].accelY;
-                sum_accel_z_1 = sum_accel_z_1 + m_processingBuffer[i].accelZ;
-                sum_gyro_x_1 = sum_gyro_x_1 + m_processingBuffer[i].gyroX;
-                sum_gyro_y_1 = sum_gyro_y_1 + m_processingBuffer[i].gyroY;
-                sum_gyro_z_1 = sum_gyro_z_1 + m_processingBuffer[i].gyroZ;
-                sum_ecg_1 = sum_ecg_1 + m_processingBuffer[i].ecg;
-                sum_emg_1 = sum_emg_1 + m_processingBuffer[i].emg;
+
+            if (m_processingBuffer[i].id != 0 && m_processingBuffer[i].id != 1)
+                continue;;1
+
+            if (mTimeStamp.size() == mWindowWidth) {
+                mTimeStamp.remove(0);
+                mAccelX.remove(0);
+                mAccelY.remove(0);
+                mAccelZ.remove(0);
             }
-            if (m_processingBuffer[i].id == 1) {
-                values2++;
-                sum_accel_x_2 = sum_accel_x_2 + m_processingBuffer[i].accelX;
-                sum_accel_y_2 = sum_accel_y_2 + m_processingBuffer[i].accelY;
-                sum_accel_z_2 = sum_accel_z_2 + m_processingBuffer[i].accelZ;
-                sum_gyro_x_2 = sum_gyro_x_2 + m_processingBuffer[i].gyroX;
-                sum_gyro_y_2 = sum_gyro_y_2 + m_processingBuffer[i].gyroY;
-                sum_gyro_z_2 = sum_gyro_z_2 + m_processingBuffer[i].gyroZ;
-                sum_ecg_2 = sum_ecg_2 + m_processingBuffer[i].ecg;
-                sum_emg_2 = sum_emg_2 + m_processingBuffer[i].emg;
-            }
+
+            mTimeStamp.add(m_processingBuffer[i].timeStamp);
+            mAccelX.add(m_processingBuffer[i].accelX);
+            mAccelY.add(m_processingBuffer[i].accelY);
+            mAccelZ.add(m_processingBuffer[i].accelZ);
+
+            // calculate direction
+            m_processingBuffer[i].direction = extractDirection(m_processingBuffer[i]);
+
+            output[m_processingBuffer[i].id] = m_processingBuffer[i];
         }
-        //compute mean for each sensor and save in class variable
-        if (values1 != 0) {
-            m_meanValues1[0] = (double) sum_accel_x_1 / values1;
-            m_meanValues1[1] = (double) sum_accel_y_1 / values1;
-            m_meanValues1[2] = (double) sum_accel_z_1 / values1;
-            m_meanValues1[3] = (double) sum_gyro_x_1 / values1;
-            m_meanValues1[4] = (double) sum_gyro_y_1 / values1;
-            m_meanValues1[5] = (double) sum_gyro_z_1 / values1;
-            m_meanValues1[6] = (double) sum_ecg_1 / values1;
-            m_meanValues1[7] = (double) sum_emg_1 / values1;
-        }
-        if (values2 != 0) {
-            m_meanValues2[0] = (double) sum_accel_x_2 / values2;
-            m_meanValues2[1] = (double) sum_accel_y_2 / values2;
-            m_meanValues2[2] = (double) sum_accel_z_2 / values2;
-            m_meanValues2[3] = (double) sum_gyro_x_2 / values2;
-            m_meanValues2[4] = (double) sum_gyro_y_2 / values2;
-            m_meanValues2[5] = (double) sum_gyro_z_2 / values2;
-            m_meanValues2[6] = (double) sum_ecg_2 / values2;
-            m_meanValues2[7] = (double) sum_emg_2 / values2;
-        }
+
         //unlock processing buffer
         m_dataLock.unlock();
         Log.i("ExampleDataProcessor", "extensive computations stopped");
-        /////////////////////////////////////////////////////////////
-        // Notify the GUI that the complex computation is finished //
-        /////////////////////////////////////////////////////////////
-        m_handler.obtainMessage(MESSAGE_READ).sendToTarget();
-    }
 
-
-    public double[] getMeanValues(int flag) {
-        //get method for meanValues
-        if (flag == 0) {
-            return m_meanValues1;
-        } else {
-            return m_meanValues2;
+        // call all handlers
+        for (Handler h: mHandlers) {
+            Message msg = h.obtainMessage();
+            // pass them current data from two shimmers
+            msg.obj = output;
+            msg.sendToTarget();
         }
     }
-
 
     public void scheduleProcessing() {
         //schedule the comprehensive processing task in a separate thread
@@ -270,15 +239,23 @@ public class DataProcessor {
         for (int i = 0; i < mH.size(); i++) {
             mFilter.add(mH.get(i) / mSumOfW);
         }
+
+        mAccelX = new ArrayList<Double>();
+        mAccelY = new ArrayList<Double>();
+        mAccelZ = new ArrayList<Double>();
+        mTimeStamp = new ArrayList<Float>();
     }
 
-    private String ExtractDirection(float x, float y, float z) {
-        String direction;
-        if (Math.abs(x) > 10 || Math.abs(y) > 10 || Math.abs(z) > 10) {
+    private String extractDirection(CalibratedData data) {
+        float x = (float)data.accelX;
+        float y = (float)data.accelY;
+        float z = (float)data.accelZ;
+
+        if (Math.abs(x) > peak || Math.abs(y) > peak || Math.abs(z) > peak) {
             return "PIK";
         }
         y = -y;
-        direction = null;
+        String direction = null;
         if (y < mYt) {
             if (x > mXtr) {
                 direction = "r";
@@ -295,5 +272,53 @@ public class DataProcessor {
         }
 
         return direction;
+    }
+
+    public static double getmYt() {
+        return mYt;
+    }
+
+    public static void setmYt(double mYt) {
+        DataProcessor.mYt = mYt;
+    }
+
+    public static double getmXtl() {
+        return mXtl;
+    }
+
+    public static void setmXtl(double mXtl) {
+        DataProcessor.mXtl = mXtl;
+    }
+
+    public static double getmXtr() {
+        return mXtr;
+    }
+
+    public static void setmXtr(double mXtr) {
+        DataProcessor.mXtr = mXtr;
+    }
+
+    public static double getmZtf() {
+        return mZtf;
+    }
+
+    public static void setmZtf(double mZtf) {
+        DataProcessor.mZtf = mZtf;
+    }
+
+    public static double getmZtb() {
+        return mZtb;
+    }
+
+    public static void setmZtb(double mZtb) {
+        DataProcessor.mZtb = mZtb;
+    }
+
+    public static double getPeak() {
+        return peak;
+    }
+
+    public static void setPeak(double peak) {
+        DataProcessor.peak = peak;
     }
 }

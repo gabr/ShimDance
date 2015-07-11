@@ -1,6 +1,7 @@
 package com.arekaga.shimdance;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,7 +31,9 @@ public class TracksActivity extends Activity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_calibration) {
+            Intent calibration = new Intent(getApplicationContext(), CalibrationActivity.class);
+            startActivity(calibration);
             return true;
         }
 

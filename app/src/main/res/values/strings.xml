@@ -12,6 +12,9 @@
     <string name="settings_sampling_rate">Sampling rate</string>
     <string name="settings_accel_range">Accel range</string>
     <string name="settings">Settings</string>
+    <string name="action_calibration">Calibration</string>
+    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_calibration">Calibration</string>
 
 </resources>

@@ -61,7 +61,6 @@ public class SensorDeviceManager {
 							   int[] accelRanges, 
 							   double[] samplingRates,
                                double frequency,
-							   Handler handler,
                                Handler onConnected) {
         //set on connected handler
         mOnConnected = onConnected;
@@ -102,7 +101,7 @@ public class SensorDeviceManager {
 		mOldTimeStamp 	= 0.0;
 		mAccTimeStamp 	= 0;
 		//set data processor
-		this.mDataProcessor = new DataProcessor(handler, frequency);
+		this.mDataProcessor = new DataProcessor(frequency);
 	}
 	
 	//handler for incoming live BLUETOOTH data
@@ -251,7 +250,7 @@ public class SensorDeviceManager {
 										mShimmerConnectedFlag = false;
 									}
 									if (shimmer.getShimmerState() != Shimmer.STATE_CONNECTED) {
-                                        Toast.makeText(mActivity.getApplicationContext(), "Connected to with first device", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(mActivity.getApplicationContext(), "Connected to first device", Toast.LENGTH_SHORT).show();
 										//connect the unconnected SHIMMER
 										shimmer.connect(device.getAddress(), "default");
 										Log.i("SensorDeviceManager", "Connect SHIMMER " + device.getAddress() + " .");

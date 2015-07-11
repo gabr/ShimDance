@@ -41,6 +41,10 @@
             android:name=".TracksActivity"
             android:label="@string/app_name" >
         </activity>
+        <activity
+            android:name=".CalibrationActivity"
+            android:label="@string/title_activity_calibration" >
+        </activity>
     </application>
 
 </manifest>

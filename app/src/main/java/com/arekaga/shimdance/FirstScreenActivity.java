@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
+import android.app.ActionBar;
 import android.content.SharedPreferences;
 import android.hardware.SensorEventListener;
 import android.os.Bundle;
@@ -19,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -94,6 +96,10 @@ public class FirstScreenActivity extends Activity {
      * Frame around list view
      */
     private View mFrameLayout;
+    /**
+     * Progress bar for connection
+     */
+    private ProgressBar mProgress;
     //endregion
 
     //region Current selection
@@ -204,31 +210,13 @@ public class FirstScreenActivity extends Activity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_settings && !mIsConnecting) {
             Intent settings = new Intent(this, SettingsActivity.class);
             startActivity(settings);
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
-    /**
-     * Handler for updating GUI
-     */
-    private final Handler mGUIUpdateHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                //read message
-                case DataProcessor.MESSAGE_READ:
-                    onShimmerProcessorEvent();
-                    break;
-                //unknown message
-                default:
-                    Log.e("ExampleActivity", "Unknown message received.");
-                    break;
-            }
-        }
-    };
 
     /**
      * Handler for updating GUI
@@ -242,8 +230,8 @@ public class FirstScreenActivity extends Activity {
                     mConnectTimeoutThread.interrupt();
                     Toast.makeText(getApplicationContext(), "Both devices connected", Toast.LENGTH_SHORT).show();
 
-                    Intent settings = new Intent(getApplicationContext(), TracksActivity.class);
-                    startActivity(settings);
+                    Intent tracks = new Intent(getApplicationContext(), TracksActivity.class);
+                    startActivity(tracks);
                     break;
 
                 case FirstScreenActivity.TIMEOUT:
@@ -274,6 +262,7 @@ public class FirstScreenActivity extends Activity {
         mEnableBluetoothButton = (Button) findViewById(R.id.EnableBluetoothButton);
         mNoBluetoothTextView = (TextView) findViewById(R.id.NoBluetoothTextView);
         mFrameLayout = findViewById(R.id.FrameLayout);
+        mProgress = (ProgressBar) findViewById(R.id.Progress);
 
         //log status
         Log.i("FirstScreenActivity", "Standard GUI components created.");
@@ -311,68 +300,6 @@ public class FirstScreenActivity extends Activity {
     }
 
     /**
-     * Updates display data after getting reading from Shimmer
-     */
-    public void onShimmerProcessorEvent() {
-        //get processing buffer size        
-        int proc_size = mSensorDeviceManager.getDataProcessor().getProcessingBufferSize();
-        //get processing buffer
-        CalibratedData[] data = mSensorDeviceManager.getDataProcessor().getProcessingBuffer();
-
-        //UPDATE DISPLAY VIEW
-
-        //iterator for insertion
-        int iter_insert = 0;
-
-        //get number of selected devices
-        //int num_devices = mSelectedDeviceNames.size();
-        int num_devices = mInternalSensors.length;
-
-        //loop over all selected devices
-        for (int i = 0; i < num_devices; i++) {
-            int num_samples = 0;
-            //get puffer size of current sensor
-            for (int j = 0; j < proc_size; j++) {
-                //if data packet belongs to current sensor
-                if (data[j].id == i) {
-                    num_samples++;
-                }
-            }
-
-            //arrays for signal data - accel
-            double[] ax = new double[num_samples];
-            double[] ay = new double[num_samples];
-            double[] az = new double[num_samples];
-            //arrays for signal data - gyro
-            double[] gx = new double[num_samples];
-            double[] gy = new double[num_samples];
-            double[] gz = new double[num_samples];
-            //array for timestamp
-            float[] timestamp = new float[num_samples];
-
-            //iterator in data
-            int iter_data = 0;
-            for (int j = 0; j < proc_size; j++) {
-                //if data packet belongs to current sensor
-                if (data[j].id == i) {
-                    //set arrays
-                    ax[iter_data] = data[j].accelX;
-                    ay[iter_data] = data[j].accelY;
-                    az[iter_data] = data[j].accelZ;
-                    gx[iter_data] = data[j].gyroX;
-                    gy[iter_data] = data[j].gyroY;
-                    gz[iter_data] = data[j].gyroZ;
-                    timestamp[iter_data] = data[j].timeStamp;
-
-                    iter_data++;
-                }
-            }
-
-            // todo aktualizacja widoku
-        }
-    }
-
-    /**
      * Checks Bluetooth status
      *
      * @return Bluetooth status
@@ -405,6 +332,7 @@ public class FirstScreenActivity extends Activity {
                 mEnableBluetoothButton.setVisibility(View.VISIBLE);
                 mNoBluetoothTextView.setVisibility(View.GONE);
                 mFrameLayout.setVisibility(View.GONE);
+                mProgress.setVisibility(View.GONE);
                 break;
             case on:
                 mInfoTextView.setText(getResources().getString(R.string.InfoTextView));
@@ -414,6 +342,7 @@ public class FirstScreenActivity extends Activity {
                 mEnableBluetoothButton.setVisibility(View.GONE);
                 mNoBluetoothTextView.setVisibility(View.GONE);
                 mFrameLayout.setVisibility(View.VISIBLE);
+                mProgress.setVisibility(View.GONE);
                 fillDevicesList(); // create corresponding GUI
                 break;
             case missing:
@@ -423,6 +352,7 @@ public class FirstScreenActivity extends Activity {
                 mEnableBluetoothButton.setVisibility(View.GONE);
                 mFrameLayout.setVisibility(View.GONE);
                 mNoBluetoothTextView.setVisibility(View.VISIBLE);
+                mProgress.setVisibility(View.GONE);
                 break;
             case connecting:
                 mInfoTextView.setText(getResources().getString(R.string.InfoTextViewConnectin));
@@ -432,6 +362,7 @@ public class FirstScreenActivity extends Activity {
                 mEnableBluetoothButton.setVisibility(View.GONE);
                 mNoBluetoothTextView.setVisibility(View.GONE);
                 mFrameLayout.setVisibility(View.INVISIBLE);
+                mProgress.setVisibility(View.VISIBLE);
                 break;
         }
     }
@@ -479,7 +410,7 @@ public class FirstScreenActivity extends Activity {
 
         // two devices are selected so try to connect with them
         //set device managers
-        mSensorDeviceManager = new SensorDeviceManager(this, mSelectedDevices, mBluetoothAdapter, mInternalSensors, mAccelRanges, mSamplingRates, samplingRate, mGUIUpdateHandler, mOnConnected);
+        mSensorDeviceManager = new SensorDeviceManager(this, mSelectedDevices, mBluetoothAdapter, mInternalSensors, mAccelRanges, mSamplingRates, samplingRate, mOnConnected);
         //start SHIMMER sensor
         mSensorDeviceManager.startShimmer();
 
@@ -498,8 +429,11 @@ public class FirstScreenActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (mIsConnecting)
+        if (mIsConnecting) {
             mOnConnected.obtainMessage(FirstScreenActivity.BREAK).sendToTarget();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     /**
@@ -516,15 +450,6 @@ public class FirstScreenActivity extends Activity {
                 manageBluetoothState(BluetoothStatus.on);
             } else {
                 Toast.makeText(this, "Enabling Bluetooth failed!", Toast.LENGTH_SHORT).show();
-            }
-        }
-
-        if (requestCode == REQUEST_SENSOR_CONFIG_ACTIVITY) {
-            if (resultCode == RESULT_OK) {
-                //get SHIMMER sensor configurations
-                mSamplingRates = data.getDoubleArrayExtra("samplingRates");
-                mAccelRanges = data.getIntArrayExtra("accelRanges");
-                mInternalSensors = data.getIntArrayExtra("internalSensors");
             }
         }
     }
