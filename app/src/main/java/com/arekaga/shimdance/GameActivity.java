@@ -19,15 +19,18 @@ public class GameActivity extends Activity {
     private TextView mTrackName;
     private TextView mTrackSubscription;
     private ImageButton mPlayPauseButton;
+    private CanvasView mCanvasView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
+        // get GUI
         mTrackName = (TextView) findViewById(R.id.trackName);
         mTrackSubscription = (TextView) findViewById(R.id.trackSubscription);
         mPlayPauseButton = (ImageButton) findViewById(R.id.PlayPauseButton);
+        mCanvasView = (CanvasView) findViewById(R.id.CanvasView);
 
         // get track from TrackActivity
         mTrack = TracksActivity.getSelectedTrack();
