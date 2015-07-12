@@ -9,10 +9,16 @@ import android.view.MenuItem;
 
 public class TracksActivity extends Activity {
 
+    private TracksListView mTracksList;
+    private String[][] mTracks = {{"test", "sub"}};
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tracks);
+
+        mTracksList = (TracksListView) findViewById(R.id.TracksListView);
+        mTracksList.addTracks(mTracks);
     }
 
 

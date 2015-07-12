@@ -120,11 +120,11 @@ public class CalibrationActivity extends Activity {
                 mOutputTextView2.setText("");
 
             if (data[0] != null && data[0].direction != null) {
-                mOutputTextView1.append(data[0].direction);
+                mOutputTextView1.append(" " + data[0].direction);
             }
 
             if (data[1] != null && data[1].direction != null) {
-                mOutputTextView2.append(data[1].direction);
+                mOutputTextView2.append(" " + data[1].direction);
             }
         }
     };

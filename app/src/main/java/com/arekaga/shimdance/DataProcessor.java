@@ -13,16 +13,12 @@ import android.util.Log;
 public class DataProcessor {
 
     //region Algorithm
-    private static double mYt = 8.2;
-    private static double mXtl = 2.2;
-    private static double mXtr = 2.2;
-    private static double mZtf = 2.2;
-    private static double mZtb = 2.1;
+    private static double mYt = 8.0;
+    private static double mXtl = 0.3;
+    private static double mXtr = 0.3;
+    private static double mZtf = 0.3;
+    private static double mZtb = 0.3;
     private static double peak = 20;
-
-    private double[] mAccelXa;
-    private double[] mAccelYa;
-    private double[] mAccelZa;
 
     private ArrayList<Double>[] mAccelX;
     private ArrayList<Double>[] mAccelY;
@@ -181,14 +177,6 @@ public class DataProcessor {
                 m_processingBuffer[i].accelZ = convolution(mDataIndex, mAccelZ[m_processingBuffer[i].id], mFilter);
             }
 
-            //mAccelXa[m_processingBuffer[i].id] += m_processingBuffer[i].accelX;
-            //mAccelYa[m_processingBuffer[i].id] += m_processingBuffer[i].accelY;
-            //mAccelZa[m_processingBuffer[i].id] += m_processingBuffer[i].accelZ;
-
-            //m_processingBuffer[i].accelX = mAccelXa[m_processingBuffer[i].id] /= 2.0;
-            //m_processingBuffer[i].accelY = mAccelYa[m_processingBuffer[i].id] /= 2.0;
-            //m_processingBuffer[i].accelZ = mAccelZa[m_processingBuffer[i].id] /= 2.0;
-
             // calculate direction
             m_processingBuffer[i].direction = extractDirection(m_processingBuffer[i]);
 
@@ -245,11 +233,9 @@ public class DataProcessor {
 
     private void createFilter(double frequency) {
         mFrequency = frequency;
-        mWindowWidth = (int) (mFrequency / 2.0);
-        mWindowIndex = (int) (mWindowWidth / 2.0);
-        mDirectionWidth = (int) (mWindowWidth / 4.0);
+        mWindowWidth = (int) (mFrequency / 4.0);
         mN = (int) (Math.ceil(4 / mB));
-        mDataIndex = (int) mWindowWidth / 2;
+        mDataIndex = mWindowWidth / 2;
 
         if (((int) mN) % 2 == 0) {
             mN += 1;
@@ -277,11 +263,6 @@ public class DataProcessor {
             mFilter.add(mH.get(i) / mSumOfW);
         }
 
-
-        mAccelXa = new double[2];
-        mAccelYa = new double[2];
-        mAccelZa = new double[2];
-
         mAccelX = new ArrayList[2];
         mAccelY = new ArrayList[2];
         mAccelZ = new ArrayList[2];
@@ -292,10 +273,6 @@ public class DataProcessor {
             mAccelY[i] = new ArrayList<Double>();
             mAccelZ[i] = new ArrayList<Double>();
             mTimeStamp[i] = new ArrayList<Float>();
-
-            mAccelXa[i] = 0.0;
-            mAccelYa[i] = 0.0;
-            mAccelZa[i] = 0.0;
         }
     }
 
@@ -309,17 +286,21 @@ public class DataProcessor {
         }
         y = -y;
         String direction = null;
+        double delta = 0.0;
         if (y < mYt) {
             if (x > mXtr) {
                 direction = "r";
+                delta = Math.abs(x);
             }
-            if (x < -mXtl) {
+            if (x < -mXtl && Math.abs(x) > delta) {
                 direction = "l";
+                delta = Math.abs(x);
             }
-            if (z > mZtf) {
+            if (z > mZtf && Math.abs(z) > delta) {
                 direction = "f";
+                delta = Math.abs(z);
             }
-            if (z < -mZtb) {
+            if (z < -mZtb && Math.abs(z) > delta) {
                 direction = "b";
             }
         }
