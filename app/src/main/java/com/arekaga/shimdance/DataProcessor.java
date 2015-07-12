@@ -20,19 +20,24 @@ public class DataProcessor {
     private static double mZtb = 2.1;
     private static double peak = 20;
 
-    private ArrayList<Double> mAccelX;
-    private ArrayList<Double> mAccelY;
-    private ArrayList<Double> mAccelZ;
-    private ArrayList<Float> mTimeStamp;
+    private double[] mAccelXa;
+    private double[] mAccelYa;
+    private double[] mAccelZa;
+
+    private ArrayList<Double>[] mAccelX;
+    private ArrayList<Double>[] mAccelY;
+    private ArrayList<Double>[] mAccelZ;
+    private ArrayList<Float>[] mTimeStamp;
     //endregion
 
     //region Filter
     private int mWindowWidth;
     private int mWindowIndex;
     private int mDirectionWidth;
+    private int mDataIndex;
     private double mFrequency;
 
-    private double mFc = 0.001;
+    private double mFc = 0.1;
     private double mB = 0.09;
     private double mN;
     private double mSumOfW;
@@ -157,19 +162,32 @@ public class DataProcessor {
         for (int i = 0; i < COPYSIZE; i++) {
 
             if (m_processingBuffer[i].id != 0 && m_processingBuffer[i].id != 1)
-                continue;;1
+                continue;
 
-            if (mTimeStamp.size() == mWindowWidth) {
-                mTimeStamp.remove(0);
-                mAccelX.remove(0);
-                mAccelY.remove(0);
-                mAccelZ.remove(0);
+            mTimeStamp[m_processingBuffer[i].id].add(m_processingBuffer[i].timeStamp);
+            mAccelX[m_processingBuffer[i].id].add(m_processingBuffer[i].accelX);
+            mAccelY[m_processingBuffer[i].id].add(m_processingBuffer[i].accelY);
+            mAccelZ[m_processingBuffer[i].id].add(m_processingBuffer[i].accelZ);
+
+            if (mTimeStamp[m_processingBuffer[i].id].size() == mWindowWidth) {
+                mTimeStamp[m_processingBuffer[i].id].remove(0);
+                mAccelX[m_processingBuffer[i].id].remove(0);
+                mAccelY[m_processingBuffer[i].id].remove(0);
+                mAccelZ[m_processingBuffer[i].id].remove(0);
+
+                // filter data
+                m_processingBuffer[i].accelX = convolution(mDataIndex, mAccelX[m_processingBuffer[i].id], mFilter);
+                m_processingBuffer[i].accelY = convolution(mDataIndex, mAccelY[m_processingBuffer[i].id], mFilter);
+                m_processingBuffer[i].accelZ = convolution(mDataIndex, mAccelZ[m_processingBuffer[i].id], mFilter);
             }
 
-            mTimeStamp.add(m_processingBuffer[i].timeStamp);
-            mAccelX.add(m_processingBuffer[i].accelX);
-            mAccelY.add(m_processingBuffer[i].accelY);
-            mAccelZ.add(m_processingBuffer[i].accelZ);
+            //mAccelXa[m_processingBuffer[i].id] += m_processingBuffer[i].accelX;
+            //mAccelYa[m_processingBuffer[i].id] += m_processingBuffer[i].accelY;
+            //mAccelZa[m_processingBuffer[i].id] += m_processingBuffer[i].accelZ;
+
+            //m_processingBuffer[i].accelX = mAccelXa[m_processingBuffer[i].id] /= 2.0;
+            //m_processingBuffer[i].accelY = mAccelYa[m_processingBuffer[i].id] /= 2.0;
+            //m_processingBuffer[i].accelZ = mAccelZa[m_processingBuffer[i].id] /= 2.0;
 
             // calculate direction
             m_processingBuffer[i].direction = extractDirection(m_processingBuffer[i]);
@@ -203,8 +221,26 @@ public class DataProcessor {
         }).start();
     }
 
+    private double convolution(int t, ArrayList<Double> f, ArrayList<Double> g)
+    {
+        double yf, yg;
+        double result = 0.0;
+
+        for (int i = -mWindowWidth; i < mWindowWidth; i++) {
+            yf = i >= 0 && i < f.size() ? f.get(i) : 0.0;
+            yg = (t - i) >= 0 && (t - i) < g.size() ? g.get(t - i) : 0.0;
+
+            result += yf * yg;
+        }
+
+        return result;
+    }
+
     private double sinc(double x) {
-        return Math.sin(x)/x;
+        if (x == 0)
+            return 1.0;
+
+        return Math.sin(Math.PI * x)/(Math.PI * x);
     }
 
     private void createFilter(double frequency) {
@@ -213,6 +249,7 @@ public class DataProcessor {
         mWindowIndex = (int) (mWindowWidth / 2.0);
         mDirectionWidth = (int) (mWindowWidth / 4.0);
         mN = (int) (Math.ceil(4 / mB));
+        mDataIndex = (int) mWindowWidth / 2;
 
         if (((int) mN) % 2 == 0) {
             mN += 1;
@@ -240,10 +277,26 @@ public class DataProcessor {
             mFilter.add(mH.get(i) / mSumOfW);
         }
 
-        mAccelX = new ArrayList<Double>();
-        mAccelY = new ArrayList<Double>();
-        mAccelZ = new ArrayList<Double>();
-        mTimeStamp = new ArrayList<Float>();
+
+        mAccelXa = new double[2];
+        mAccelYa = new double[2];
+        mAccelZa = new double[2];
+
+        mAccelX = new ArrayList[2];
+        mAccelY = new ArrayList[2];
+        mAccelZ = new ArrayList[2];
+        mTimeStamp = new ArrayList[2];
+
+        for (int i = 0; i < 2; i++) {
+            mAccelX[i] = new ArrayList<Double>();
+            mAccelY[i] = new ArrayList<Double>();
+            mAccelZ[i] = new ArrayList<Double>();
+            mTimeStamp[i] = new ArrayList<Float>();
+
+            mAccelXa[i] = 0.0;
+            mAccelYa[i] = 0.0;
+            mAccelZa[i] = 0.0;
+        }
     }
 
     private String extractDirection(CalibratedData data) {

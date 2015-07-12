@@ -124,7 +124,7 @@ public class CalibrationActivity extends Activity {
             }
 
             if (data[1] != null && data[1].direction != null) {
-                mOutputTextView1.append(data[1].direction);
+                mOutputTextView2.append(data[1].direction);
             }
         }
     };
