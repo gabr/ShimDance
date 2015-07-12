@@ -3,10 +3,10 @@
                  android:layout_width="fill_parent"
                  android:layout_height="fill_parent"
                  android:background="@drawable/background"
-                 android:paddingLeft="@dimen/first_screen_side_padding"
-                 android:paddingRight="@dimen/first_screen_side_padding"
-                 android:paddingTop="@dimen/first_screen_top_bottom_padding"
-                 android:paddingBottom="@dimen/first_screen_top_bottom_padding">
+                 android:paddingLeft="@dimen/screen_side_padding"
+                 android:paddingRight="@dimen/screen_side_padding"
+                 android:paddingTop="@dimen/screen_top_bottom_padding"
+                 android:paddingBottom="@dimen/screen_top_bottom_padding">
 
     <TextView
         android:id="@+id/TracksTextView"
