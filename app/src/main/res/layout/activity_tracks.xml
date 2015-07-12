@@ -2,6 +2,7 @@
                  android:gravity="center_horizontal"
                  android:layout_width="fill_parent"
                  android:layout_height="fill_parent"
+                 android:background="@drawable/background"
                  android:paddingLeft="@dimen/first_screen_side_padding"
                  android:paddingRight="@dimen/first_screen_side_padding"
                  android:paddingTop="@dimen/first_screen_top_bottom_padding"
@@ -11,6 +12,7 @@
         android:id="@+id/TracksTextView"
         android:text="@string/TracksTextView"
         android:textSize="20dp"
+        android:textColor="@android:color/white"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -23,7 +25,7 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
         android:padding="1dp"
-        android:background="@android:color/black"
+        android:background="@android:color/transparent"
         android:layout_marginTop="40dp"
         android:layout_marginBottom="60dp">
 
@@ -31,7 +33,7 @@
             android:id="@+id/TracksListView"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:background="@android:color/white"/>
+            android:background="@android:color/transparent"/>
 
     </LinearLayout>
 
@@ -39,8 +41,10 @@
         android:id="@+id/PlayButton"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:onClick="onStartButton"
-        android:text="@string/StartButton"
+        android:textColor="@android:color/white"
+        android:onClick="onPlayButton"
+        android:text="@string/PlayButton"
+        android:drawableRight="@android:drawable/ic_media_play"
         android:layout_alignParentBottom="true"/>
 
 </RelativeLayout>

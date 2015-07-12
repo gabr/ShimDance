@@ -5,12 +5,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
 
 
 public class TracksActivity extends Activity {
 
     private TracksListView mTracksList;
-    private String[][] mTracks = {{"test", "sub"}};
+    private Track[] mTracks = new Track[] { new Track("A Little Less Conversation", "Elvis Presley",
+            R.raw.elvis_presley_vs_jxl_a_little_less_conversation)};
+
+    private static Track mSelectedSong;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,5 +49,21 @@ public class TracksActivity extends Activity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void onPlayButton(View view) {
+        Track selected = mTracksList.getSelected();
+        if (selected == null) {
+            Toast.makeText(this, "Select song", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        mSelectedSong = selected;
+        Intent game = new Intent(getApplicationContext(), GameActivity.class);
+        startActivity(game);
+    }
+
+    public static Track getSelectedTrack() {
+        return mSelectedSong;
     }
 }

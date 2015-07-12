@@ -45,6 +45,10 @@
             android:name=".CalibrationActivity"
             android:label="@string/title_activity_calibration" >
         </activity>
+        <activity
+            android:name=".GameActivity"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
+        </activity>
     </application>
 
 </manifest>

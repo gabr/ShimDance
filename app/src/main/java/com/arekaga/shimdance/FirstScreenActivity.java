@@ -214,6 +214,10 @@ public class FirstScreenActivity extends Activity {
             Intent settings = new Intent(this, SettingsActivity.class);
             startActivity(settings);
             return true;
+        } else if (id == R.id.action_secreet) {
+            Intent tracks = new Intent(getApplicationContext(), TracksActivity.class);
+            startActivity(tracks);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

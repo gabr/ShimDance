@@ -25,13 +25,11 @@ public class TracksListView extends ListView {
      * Container for one list item data
      */
     private class Item {
-        public String name;
-        public String subscription;
         public Boolean selected;
+        public Track track;
 
-        public Item(String name, String subscription) {
-            this.name = name;
-            this.subscription = subscription;
+        public Item(Track track) {
+            this.track = track;
             this.selected = false;
         }
     }
@@ -87,11 +85,11 @@ public class TracksListView extends ListView {
             RadioButton radioButton = (RadioButton) convertView.findViewById(R.id.row_track_radio_button);
 
             // rewrite data from item to GUI elements
-            trackName.setText(item.name);
-            trackSubscription.setText(item.subscription);
+            trackName.setText(item.track.name);
+            trackSubscription.setText(item.track.subscription);
             radioButton.setChecked(item.selected);
 
-            // save item position in check box
+            // save item position in tags
             radioButton.setTag(position);
 
             // add check box listener
@@ -102,7 +100,7 @@ public class TracksListView extends ListView {
         }
 
         /**
-         * Implementatino of OnCheckedChangeListener.
+         * Implementation of OnCheckedChangeListener.
          * Saves new radio button state in related item.
          * @param b new radio button state
          */
@@ -112,18 +110,17 @@ public class TracksListView extends ListView {
             int position = (Integer) compoundButton.getTag();
             // get item
             Item item = getItem(position);
-
-            // if state is checked set this item as selected one
-            if (b) {
+            // change item state if was unselected
+            item.selected = b;
+            if (item.selected) {
+                item.selected = true;
                 if (mSelectedItem != null) {
                     mSelectedItem.selected = false;
                 }
-
-                item.selected = true;
                 mSelectedItem = item;
             }
 
-            // redraw all checkboxes
+            // redraw all
             this.notifyDataSetChanged();
         }
 
@@ -195,12 +192,12 @@ public class TracksListView extends ListView {
      *               where first element is track name, and the
      *               second is track subscription
      */
-    public void addTracks(String[][] tracks) {
+    public void addTracks(Track[] tracks) {
         // clear devices list in adapter
         mAdapter.clearItemsList();
         // for each device create and add Item object
-        for (String[] data: tracks) {
-            mAdapter.addItem(new Item(data[0], data[1]));
+        for (Track t: tracks) {
+            mAdapter.addItem(new Item(t));
         }
         // refresh view
         mAdapter.notifyDataSetChanged();
@@ -210,8 +207,10 @@ public class TracksListView extends ListView {
      * Returns selected track
      * @return selected track
      */
-    public String[] getSelected() {
+    public Track getSelected() {
         Item item = mAdapter.getSelected();
-        return new String[] {item.name, item.subscription};
+        if (item == null)
+            return null;
+        return item.track;
     }
 }

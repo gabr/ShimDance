@@ -8,8 +8,6 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,10 +20,7 @@ public class CalibrationActivity extends Activity {
 
     private EditText mEtY;
     private EditText mEtPeak;
-    private EditText mEtXtl;
-    private EditText mEtXtr;
-    private EditText mEtZtf;
-    private EditText mEtZtb;
+    private EditText mEtEpsilon;
     private TextView mOutputTextView1;
     private TextView mOutputTextView2;
 
@@ -41,10 +36,7 @@ public class CalibrationActivity extends Activity {
 
         mEtY = (EditText) findViewById(R.id.etY);
         mEtPeak = (EditText) findViewById(R.id.etPeak);
-        mEtXtl = (EditText) findViewById(R.id.etXtl);
-        mEtXtr = (EditText) findViewById(R.id.etXtr);
-        mEtZtf = (EditText) findViewById(R.id.etZtf);
-        mEtZtb = (EditText) findViewById(R.id.etZtb);
+        mEtEpsilon = (EditText) findViewById(R.id.etEpsilon);
         mPlotView1 = (PlotView) findViewById(R.id.plot1);
         mPlotView2 = (PlotView) findViewById(R.id.plot2);
 
@@ -54,12 +46,9 @@ public class CalibrationActivity extends Activity {
         mOutputTextView2 = (TextView) findViewById(R.id.outptTextView2);
         mOutputTextView2.setMovementMethod(new ScrollingMovementMethod());
 
-        mEtY.setText(Double.toString(DataProcessor.getmYt()));
+        mEtY.setText(Double.toString(DataProcessor.getY()));
         mEtPeak.setText(Double.toString(DataProcessor.getPeak()));
-        mEtXtl.setText(Double.toString(DataProcessor.getmXtl()));
-        mEtXtr.setText(Double.toString(DataProcessor.getmXtr()));
-        mEtZtf.setText(Double.toString(DataProcessor.getmZtf()));
-        mEtZtb.setText(Double.toString(DataProcessor.getmZtb()));
+        mEtEpsilon.setText(Double.toString(DataProcessor.getEpsilon()));
 
         mPlot1 = new SamplingPlot[3];
         for (int i = 0; i < 3; i++) {
@@ -120,30 +109,24 @@ public class CalibrationActivity extends Activity {
                 mOutputTextView2.setText("");
 
             if (data[0] != null && data[0].direction != null) {
-                mOutputTextView1.append(" " + data[0].direction);
+                mOutputTextView1.append(data[0].direction);
             }
 
             if (data[1] != null && data[1].direction != null) {
-                mOutputTextView2.append(" " + data[1].direction);
+                mOutputTextView2.append(data[1].direction);
             }
         }
     };
 
     public void saveConfiguration(View view) {
         try {
-            double Y = Double.parseDouble(mEtY.getText().toString());
+            double y = Double.parseDouble(mEtY.getText().toString());
             double Peak = Double.parseDouble(mEtPeak.getText().toString());
-            double Xtl = Double.parseDouble(mEtXtl.getText().toString());
-            double Xtr = Double.parseDouble(mEtXtr.getText().toString());
-            double Ztf = Double.parseDouble(mEtZtf.getText().toString());
-            double Ztb = Double.parseDouble(mEtZtb.getText().toString());
+            double epsilon = Double.parseDouble(mEtEpsilon.getText().toString());
 
-            DataProcessor.setmYt(Y);
+            DataProcessor.setY(y);
             DataProcessor.setPeak(Peak);
-            DataProcessor.setmXtl(Xtl);
-            DataProcessor.setmXtr(Xtr);
-            DataProcessor.setmZtf(Ztf);
-            DataProcessor.setmZtb(Ztb);
+            DataProcessor.setEpsilon(epsilon);
 
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Wrong data", Toast.LENGTH_SHORT).show();

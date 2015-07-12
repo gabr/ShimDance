@@ -13,12 +13,15 @@ import android.util.Log;
 public class DataProcessor {
 
     //region Algorithm
-    private static double mYt = 8.0;
-    private static double mXtl = 0.3;
-    private static double mXtr = 0.3;
-    private static double mZtf = 0.3;
-    private static double mZtb = 0.3;
-    private static double peak = 20;
+    private static double mY = 9.0;
+    private static double peak = 7;
+    private static double epsilon = 0.5;
+
+    private int peakMiddle;
+    private double peakWeightsSum;
+    private static boolean[] wasPeak = new boolean[] { false, false};
+    private ArrayList<Double>[] peakData;
+    private double[] peakWeights;
 
     private ArrayList<Double>[] mAccelX;
     private ArrayList<Double>[] mAccelY;
@@ -28,9 +31,6 @@ public class DataProcessor {
 
     //region Filter
     private int mWindowWidth;
-    private int mWindowIndex;
-    private int mDirectionWidth;
-    private int mDataIndex;
     private double mFrequency;
 
     private double mFc = 0.1;
@@ -165,16 +165,16 @@ public class DataProcessor {
             mAccelY[m_processingBuffer[i].id].add(m_processingBuffer[i].accelY);
             mAccelZ[m_processingBuffer[i].id].add(m_processingBuffer[i].accelZ);
 
-            if (mTimeStamp[m_processingBuffer[i].id].size() == mWindowWidth) {
+            if (mTimeStamp[m_processingBuffer[i].id].size() > mWindowWidth) {
                 mTimeStamp[m_processingBuffer[i].id].remove(0);
                 mAccelX[m_processingBuffer[i].id].remove(0);
                 mAccelY[m_processingBuffer[i].id].remove(0);
                 mAccelZ[m_processingBuffer[i].id].remove(0);
 
                 // filter data
-                m_processingBuffer[i].accelX = convolution(mDataIndex, mAccelX[m_processingBuffer[i].id], mFilter);
-                m_processingBuffer[i].accelY = convolution(mDataIndex, mAccelY[m_processingBuffer[i].id], mFilter);
-                m_processingBuffer[i].accelZ = convolution(mDataIndex, mAccelZ[m_processingBuffer[i].id], mFilter);
+                m_processingBuffer[i].accelX = convolution(mWindowWidth - (mWindowWidth/4), mAccelX[m_processingBuffer[i].id], mFilter);
+                m_processingBuffer[i].accelY = convolution(mWindowWidth - (mWindowWidth/4), mAccelY[m_processingBuffer[i].id], mFilter);
+                m_processingBuffer[i].accelZ = convolution(mWindowWidth - (mWindowWidth/4), mAccelZ[m_processingBuffer[i].id], mFilter);
             }
 
             // calculate direction
@@ -235,7 +235,6 @@ public class DataProcessor {
         mFrequency = frequency;
         mWindowWidth = (int) (mFrequency / 4.0);
         mN = (int) (Math.ceil(4 / mB));
-        mDataIndex = mWindowWidth / 2;
 
         if (((int) mN) % 2 == 0) {
             mN += 1;
@@ -274,78 +273,71 @@ public class DataProcessor {
             mAccelZ[i] = new ArrayList<Double>();
             mTimeStamp[i] = new ArrayList<Float>();
         }
+
+        wasPeak = new boolean[] { false, false };
+        peakWeightsSum = 0.0;
+        peakData = new ArrayList[2];
+        peakData[0] = new ArrayList<Double>();
+        peakData[1] = new ArrayList<Double>();
+        peakWeights = new double[(int)frequency/2];
+        peakMiddle = peakWeights.length/2;
+
+        for (int i = 0; i < peakWeights.length; i++) {
+            if (i <= peakMiddle) {
+                peakWeightsSum += peakWeights[i] = ((double)i)/((double)peakMiddle);
+            } else {
+                peakWeightsSum += peakWeights[i] = ((double)(2*peakMiddle - i))/((double)peakMiddle);
+            }
+        }
+    }
+
+    private boolean peakDetector(int id) {
+        // calculate weighted mean
+        double sum = 0.0;
+        for (int i = 0; i < peakWeights.length; i++) {
+            sum += peakWeights[i] * peakData[id].get(i);
+        }
+
+        double mean = sum/peakWeightsSum;
+
+        return mean > peak;
     }
 
     private String extractDirection(CalibratedData data) {
-        float x = (float)data.accelX;
+        String result = "";
+
         float y = (float)data.accelY;
+        float x = (float)data.accelX;
         float z = (float)data.accelZ;
 
-        if (Math.abs(x) > peak || Math.abs(y) > peak || Math.abs(z) > peak) {
-            return "PIK";
-        }
-        y = -y;
-        String direction = null;
-        double delta = 0.0;
-        if (y < mYt) {
-            if (x > mXtr) {
-                direction = "r";
-                delta = Math.abs(x);
-            }
-            if (x < -mXtl && Math.abs(x) > delta) {
-                direction = "l";
-                delta = Math.abs(x);
-            }
-            if (z > mZtf && Math.abs(z) > delta) {
-                direction = "f";
-                delta = Math.abs(z);
-            }
-            if (z < -mZtb && Math.abs(z) > delta) {
-                direction = "b";
+        peakData[data.id].add((Math.abs(y) + Math.abs(x) + Math.abs(z))/3.0);
+        if (peakData[data.id].size() > peakWeights.length)
+            peakData[data.id].remove(0);
+
+        if (peakData[data.id].size() == peakWeights.length) {
+            if (peakDetector(data.id)) {
+                if (!wasPeak[data.id]) {
+                    result += " PEAK ";
+                    wasPeak[data.id] = true;
+                }
+            } else {
+                wasPeak[data.id] = false;
             }
         }
 
-        return direction;
-    }
+        if (Math.abs(y) < mY) {
+            double diff = Math.abs(Math.abs(x) - Math.abs(z));
 
-    public static double getmYt() {
-        return mYt;
-    }
+            if (diff > epsilon) {
+                if (Math.abs(x) > Math.abs(z)) {
+                    result += x > 0 ? " r " : " l ";
+                } else {
+                    result += z > 0 ? " f " : " b ";
+                }
+            }
+        }
 
-    public static void setmYt(double mYt) {
-        DataProcessor.mYt = mYt;
-    }
-
-    public static double getmXtl() {
-        return mXtl;
-    }
-
-    public static void setmXtl(double mXtl) {
-        DataProcessor.mXtl = mXtl;
-    }
-
-    public static double getmXtr() {
-        return mXtr;
-    }
-
-    public static void setmXtr(double mXtr) {
-        DataProcessor.mXtr = mXtr;
-    }
-
-    public static double getmZtf() {
-        return mZtf;
-    }
-
-    public static void setmZtf(double mZtf) {
-        DataProcessor.mZtf = mZtf;
-    }
-
-    public static double getmZtb() {
-        return mZtb;
-    }
-
-    public static void setmZtb(double mZtb) {
-        DataProcessor.mZtb = mZtb;
+        return result;
     }
 
     public static double getPeak() {
@@ -354,5 +346,21 @@ public class DataProcessor {
 
     public static void setPeak(double peak) {
         DataProcessor.peak = peak;
+    }
+
+    public static double getEpsilon() {
+        return epsilon;
+    }
+
+    public static void setEpsilon(double epsilon) {
+        DataProcessor.epsilon = epsilon;
+    }
+
+    public static double getY() {
+        return mY;
+    }
+
+    public static void setY(double y) {
+        DataProcessor.mY = y;
     }
 }

@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
+        android:textColor="@android:color/white"
         android:textSize="28dp"
         android:textStyle="bold"/>
 
@@ -21,6 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_below="@id/row_device_name"
+        android:textColor="@android:color/white"
         android:textStyle="italic"
         android:paddingLeft="5dp"/>
 
@@ -29,6 +31,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
+        android:background="@drawable/white_check_box"
         android:layout_centerVertical="true"/>
 
 </RelativeLayout>
