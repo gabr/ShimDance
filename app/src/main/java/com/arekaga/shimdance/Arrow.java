@@ -65,6 +65,10 @@ public class Arrow {
     public static int getSize() {
         return mWidth;
     }
+
+    public static int getStartY() {
+        return mYStart;
+    }
     //endregion
 
     private Type mType;

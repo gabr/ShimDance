@@ -113,7 +113,10 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
         // init timer
         initTimer();
 
-        mPlayer.start();
+        if (!mPlayer.isPlaying()) {
+            mPlayer.start();
+        }
+
         mCanvasView.start();
         mPlayPauseButton.setBackgroundResource(android.R.drawable.ic_media_pause);
     }

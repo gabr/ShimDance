@@ -147,9 +147,11 @@ public class CanvasView extends View {
             }
         }
 
-        // randomly generate new arrow
-        if (mRandomGenerator.nextBoolean()) {
-            mArrowsOnScreen.add(new Arrow(Arrow.Type.fromInt(mRandomGenerator.nextInt(4))));
+        // randomly generate new arrow only if there is space fo it
+        if (mArrowsOnScreen.size() == 0 || mArrowsOnScreen.get(mArrowsOnScreen.size() -1).getY() < Arrow.getStartY() - Arrow.getSize()) {
+            if (mRandomGenerator.nextBoolean()) {
+                mArrowsOnScreen.add(new Arrow(Arrow.Type.fromInt(mRandomGenerator.nextInt(4))));
+            }
         }
     }
 
