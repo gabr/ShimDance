@@ -5,11 +5,29 @@
                  android:background="@drawable/background"
                  android:paddingBottom="@dimen/screen_top_bottom_padding">
 
+    <TextView
+        android:id="@+id/score"
+        android:textSize="20sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_alignParentLeft="true"/>
+
+    <TextView
+        android:id="@+id/trackTime"
+        android:textSize="20sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_alignParentRight="true"/>
+
     <com.arekaga.shimdance.CanvasView
         android:id="@+id/CanvasView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_marginTop="@dimen/screen_top_bottom_padding"
+        android:layout_marginTop="50dp"
         android:layout_marginLeft="@dimen/screen_side_padding"
         android:layout_marginRight="@dimen/screen_side_padding"
         android:padding="1dp"
@@ -33,6 +51,7 @@
         android:layout_marginBottom="22dp"
         android:layout_alignParentBottom="true"
         android:singleLine="true"
+        android:textColor="@android:color/white"
         android:layout_marginRight="@dimen/screen_side_padding"/>
 
     <TextView
@@ -44,6 +63,7 @@
         android:textStyle="italic"
         android:layout_alignParentBottom="true"
         android:singleLine="true"
+        android:textColor="@android:color/white"
         android:layout_marginRight="@dimen/screen_side_padding"/>
 
 </RelativeLayout>
