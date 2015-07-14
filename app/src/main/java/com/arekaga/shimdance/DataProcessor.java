@@ -1,7 +1,6 @@
 package com.arekaga.shimdance;
 
 import java.util.ArrayList;
-import java.util.Queue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -14,14 +13,11 @@ public class DataProcessor {
 
     //region Algorithm
     private static double mY = 9.0;
-    private static double peak = 7;
-    private static double epsilon = 0.5;
+    private static double mPeakThreshold = 200000.0;
+    private static double mEpsilon = 0.5;
 
-    private int peakMiddle;
-    private double peakWeightsSum;
-    private static boolean[] wasPeak = new boolean[] { false, false};
-    private ArrayList<Double>[] peakData;
-    private double[] peakWeights;
+    private ArrayList<Double>[] mPeakData;
+    private Double[] mPreviousPeak;
 
     private ArrayList<Double>[] mAccelX;
     private ArrayList<Double>[] mAccelY;
@@ -32,6 +28,7 @@ public class DataProcessor {
     //region Filter
     private int mWindowWidth;
     private double mFrequency;
+    private ArrayList<Double> mWindowMovingAverrage = new ArrayList<Double>();
 
     private double mFc = 0.1;
     private double mB = 0.09;
@@ -179,6 +176,7 @@ public class DataProcessor {
 
             // calculate direction
             m_processingBuffer[i].direction = extractDirection(m_processingBuffer[i]);
+            m_processingBuffer[i].peak = mPreviousPeak[m_processingBuffer[i].id];
 
             output[m_processingBuffer[i].id] = m_processingBuffer[i];
         }
@@ -213,8 +211,9 @@ public class DataProcessor {
     {
         double yf, yg;
         double result = 0.0;
+        int size = f.size() > g.size() ? f.size() : g.size();
 
-        for (int i = -mWindowWidth; i < mWindowWidth; i++) {
+        for (int i = 0; i < size; i++) {
             yf = i >= 0 && i < f.size() ? f.get(i) : 0.0;
             yg = (t - i) >= 0 && (t - i) < g.size() ? g.get(t - i) : 0.0;
 
@@ -266,6 +265,7 @@ public class DataProcessor {
         mAccelY = new ArrayList[2];
         mAccelZ = new ArrayList[2];
         mTimeStamp = new ArrayList[2];
+        mPreviousPeak = new Double[] { 0.0, 0.0 };
 
         for (int i = 0; i < 2; i++) {
             mAccelX[i] = new ArrayList<Double>();
@@ -274,33 +274,32 @@ public class DataProcessor {
             mTimeStamp[i] = new ArrayList<Float>();
         }
 
-        wasPeak = new boolean[] { false, false };
-        peakWeightsSum = 0.0;
-        peakData = new ArrayList[2];
-        peakData[0] = new ArrayList<Double>();
-        peakData[1] = new ArrayList<Double>();
-        peakWeights = new double[(int)frequency/2];
-        peakMiddle = peakWeights.length/2;
+        mPeakData = new ArrayList[2];
+        mPeakData[0] = new ArrayList<Double>();
+        mPeakData[1] = new ArrayList<Double>();
 
-        for (int i = 0; i < peakWeights.length; i++) {
-            if (i <= peakMiddle) {
-                peakWeightsSum += peakWeights[i] = ((double)i)/((double)peakMiddle);
-            } else {
-                peakWeightsSum += peakWeights[i] = ((double)(2*peakMiddle - i))/((double)peakMiddle);
-            }
+        createWindow();
+    }
+
+    void createWindow(){
+        //ones
+        for(int i = 0; i < mWindowWidth; i++) {
+            mWindowMovingAverrage.add(1.0 / (double)mWindowWidth);
         }
     }
 
-    private boolean peakDetector(int id) {
-        // calculate weighted mean
-        double sum = 0.0;
-        for (int i = 0; i < peakWeights.length; i++) {
-            sum += peakWeights[i] * peakData[id].get(i);
+    private String peakDetector(int id) {
+        String result = "";
+
+        double peak = convolution(mWindowWidth, mPeakData[id], mWindowMovingAverrage);
+        if (peak >= mPeakThreshold) {
+            result = "P";
+        } else {
+            result = "N";
         }
 
-        double mean = sum/peakWeightsSum;
-
-        return mean > peak;
+        mPreviousPeak[id] = peak;
+        return result;
     }
 
     private String extractDirection(CalibratedData data) {
@@ -310,25 +309,18 @@ public class DataProcessor {
         float x = (float)data.accelX;
         float z = (float)data.accelZ;
 
-        peakData[data.id].add((Math.abs(y) + Math.abs(x) + Math.abs(z))/3.0);
-        if (peakData[data.id].size() > peakWeights.length)
-            peakData[data.id].remove(0);
+        mPeakData[data.id].add(Math.pow((Math.abs(x) + Math.abs(y) + Math.abs(z)),3));
+        if (mPeakData[data.id].size() > 2*mWindowWidth)
+            mPeakData[data.id].remove(0);
 
-        if (peakData[data.id].size() == peakWeights.length) {
-            if (peakDetector(data.id)) {
-                if (!wasPeak[data.id]) {
-                    result += " PEAK ";
-                    wasPeak[data.id] = true;
-                }
-            } else {
-                wasPeak[data.id] = false;
-            }
+        if (mPeakData[data.id].size() == 2*mWindowWidth) {
+            result += peakDetector(data.id);
         }
 
         if (Math.abs(y) < mY) {
             double diff = Math.abs(Math.abs(x) - Math.abs(z));
 
-            if (diff > epsilon) {
+            if (diff > mEpsilon) {
                 if (Math.abs(x) > Math.abs(z)) {
                     result += x > 0 ? " r " : " l ";
                 } else {
@@ -340,20 +332,20 @@ public class DataProcessor {
         return result;
     }
 
-    public static double getPeak() {
-        return peak;
+    public static double getmPeakThreshold() {
+        return mPeakThreshold;
     }
 
-    public static void setPeak(double peak) {
-        DataProcessor.peak = peak;
+    public static void setmPeakThreshold(double mPeakThreshold) {
+        DataProcessor.mPeakThreshold = mPeakThreshold;
     }
 
-    public static double getEpsilon() {
-        return epsilon;
+    public static double getmEpsilon() {
+        return mEpsilon;
     }
 
-    public static void setEpsilon(double epsilon) {
-        DataProcessor.epsilon = epsilon;
+    public static void setmEpsilon(double mEpsilon) {
+        DataProcessor.mEpsilon = mEpsilon;
     }
 
     public static double getY() {

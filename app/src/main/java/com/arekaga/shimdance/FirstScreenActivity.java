@@ -391,7 +391,11 @@ public class FirstScreenActivity extends Activity {
     public void onStartButton(View view) {
         // disconnect if there are already connected devices
         if (mSelectedDevices != null && !mSelectedDevices.isEmpty()) {
-            mSensorDeviceManager.stopShimmer();
+            try {
+                mSensorDeviceManager.stopShimmer();
+            } catch (Exception e) {
+                Toast.makeText(this, "Error while stopping previous connection!", Toast.LENGTH_LONG).show();
+            }
         }
 
         // check number of selected devices

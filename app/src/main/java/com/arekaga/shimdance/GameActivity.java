@@ -14,13 +14,14 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
 
     private static final int SCORE_INCREMETN = 3;
 
+    private static MediaPlayer mPlayer;
     private Track mTrack;
-    private MediaPlayer mPlayer;
 
     private CountDownTimer mTimer;
     private long mCurrentDuration;
 
     private int mScore;
+    private boolean mIsEnd = false;
     private Arrow mSelectedArrow;
 
     private TextView mTrackName;
@@ -55,7 +56,9 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
         mTrackSubscription.setText(mTrack.subscription);
 
         // create player
-        mPlayer = MediaPlayer.create(this, mTrack.resource);
+        if (mPlayer == null) {
+            mPlayer = MediaPlayer.create(this, mTrack.resource);
+        }
 
         // set duration
         mCurrentDuration = mPlayer.getDuration();
@@ -71,6 +74,10 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
     }
 
     public void onPlayPauseButton(View view) {
+        if (mIsEnd) {
+            onBackPressed();
+        }
+
         if (mPlayer.isPlaying()) {
             pause();
         } else {
@@ -83,7 +90,8 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
             mTimer.cancel();
         }
 
-        mTimer = new CountDownTimer(mCurrentDuration, 1000) {
+        int current = mPlayer.getDuration() - mPlayer.getCurrentPosition();
+        mTimer = new CountDownTimer(current, 1000) {
             @Override
             public void onTick(long l) {
                 long min = l/(1000*60);
@@ -122,9 +130,13 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
     }
 
     private void end() {
+        mIsEnd = true;
+        mTrackTime.setVisibility(View.INVISIBLE);
+        mScoreView.setVisibility(View.INVISIBLE);
         mPlayer.stop();
+        mPlayer = null;
         mCanvasView.end(mScore);
-        mPlayPauseButton.setBackgroundResource(android.R.drawable.ic_media_play);
+        mPlayPauseButton.setBackgroundResource(android.R.drawable.ic_media_previous);
     }
 
     private void acceptArrow() {
@@ -135,12 +147,12 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
 
     @Override
     public void onBackPressed() {
-        if (mPlayer.isPlaying()) {
-            acceptArrow();
-            //pause();
+        if (mPlayer != null && mPlayer.isPlaying()) {
+            pause();
             return;
         }
 
+        end();
         super.onBackPressed();
     }
 

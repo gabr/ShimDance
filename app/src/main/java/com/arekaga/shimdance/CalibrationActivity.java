@@ -47,10 +47,10 @@ public class CalibrationActivity extends Activity {
         mOutputTextView2.setMovementMethod(new ScrollingMovementMethod());
 
         mEtY.setText(Double.toString(DataProcessor.getY()));
-        mEtPeak.setText(Double.toString(DataProcessor.getPeak()));
-        mEtEpsilon.setText(Double.toString(DataProcessor.getEpsilon()));
+        mEtPeak.setText(Double.toString(DataProcessor.getmPeakThreshold()));
+        mEtEpsilon.setText(Double.toString(DataProcessor.getmEpsilon()));
 
-        mPlot1 = new SamplingPlot[3];
+        mPlot1 = new SamplingPlot[5];
         for (int i = 0; i < 3; i++) {
             //mPlot1[i] = new SamplingPlot("", null, Plot.PlotStyle.LINE, 1000);
             mPlot1[i] = new SamplingPlot("", Plot.generatePlotPaint(2f, 255, i == 0 ? 255 : 0, i == 1 ? 255 : 0, i == 2 ? 255 : 0), Plot.PlotStyle.CROSS, 1000);
@@ -59,8 +59,14 @@ public class CalibrationActivity extends Activity {
             //attach plot to plot view
             mPlotView1.attachPlot(mPlot1[i]);
         }
+        mPlot1[3] = new SamplingPlot("", Plot.generatePlotPaint(2f, 255, 0, 0, 0), Plot.PlotStyle.CROSS, 1000);
+        mPlot1[3].setAxis( "time", " ", 1f, "amplitude", " ", 1f );
+        mPlotView1.attachPlot(mPlot1[3]);
+        mPlot1[4] = new SamplingPlot("", Plot.generatePlotPaint(2f, 255, 0, 0, 0), Plot.PlotStyle.CROSS, 1000);
+        mPlot1[4].setAxis( "time", " ", 1f, "amplitude", " ", 1f );
+        mPlotView1.attachPlot(mPlot1[4]);
 
-        mPlot2 = new SamplingPlot[3];
+        mPlot2 = new SamplingPlot[5];
         for (int i = 0; i < 3; i++) {
             //mPlot2[i] = new SamplingPlot("", null, Plot.PlotStyle.LINE, 1000);
             mPlot2[i] = new SamplingPlot("", Plot.generatePlotPaint(2f, 255, i == 0 ? 255 : 0, i == 1 ? 255 : 0, i == 2 ? 255 : 0), Plot.PlotStyle.CROSS, 1000);
@@ -69,6 +75,12 @@ public class CalibrationActivity extends Activity {
             //attach plot to plot view
             mPlotView2.attachPlot(mPlot2[i]);
         }
+        mPlot2[3] = new SamplingPlot("", Plot.generatePlotPaint(2f, 255, 0, 0, 0), Plot.PlotStyle.CROSS, 1000);
+        mPlot2[3].setAxis( "time", " ", 1f, "amplitude", " ", 1f );
+        mPlotView2.attachPlot(mPlot2[3]);
+        mPlot2[4] = new SamplingPlot("", Plot.generatePlotPaint(2f, 255, 0, 0, 0), Plot.PlotStyle.CROSS, 1000);
+        mPlot2[4].setAxis( "time", " ", 1f, "amplitude", " ", 1f );
+        mPlotView2.attachPlot(mPlot2[4]);
 
         DataProcessor.addHandler(mOnData);
     }
@@ -91,15 +103,19 @@ public class CalibrationActivity extends Activity {
             CalibratedData[] data = (CalibratedData[]) msg.obj;
 
             if (data[0] != null) {
-                mPlot1[0].addValue((float) data[0].accelX, (long) data[0].timeStamp);
-                mPlot1[1].addValue((float) data[0].accelY, (long) data[0].timeStamp);
-                mPlot1[2].addValue((float) data[0].accelZ, (long) data[0].timeStamp);
+                //mPlot1[0].addValue((float) data[0].accelX, (long) data[0].timeStamp);
+                //mPlot1[1].addValue((float) data[0].accelY, (long) data[0].timeStamp);
+                //mPlot1[2].addValue((float) data[0].accelZ, (long) data[0].timeStamp);
+                mPlot1[3].addValue((float)DataProcessor.getmPeakThreshold(), (long)data[0].timeStamp);
+                mPlot1[4].addValue((float)data[0].peak, (long)data[0].timeStamp);
             }
 
             if (data[1] != null) {
-                mPlot2[0].addValue((float) data[1].accelX, (long) data[1].timeStamp);
-                mPlot2[1].addValue((float) data[1].accelY, (long) data[1].timeStamp);
-                mPlot2[2].addValue((float) data[1].accelZ, (long) data[1].timeStamp);
+                //mPlot2[0].addValue((float) data[1].accelX, (long) data[1].timeStamp);
+                //mPlot2[1].addValue((float) data[1].accelY, (long) data[1].timeStamp);
+                //mPlot2[2].addValue((float) data[1].accelZ, (long) data[1].timeStamp);
+                mPlot2[3].addValue((float)DataProcessor.getmPeakThreshold(), (long)data[1].timeStamp);
+                mPlot2[4].addValue((float)data[1].peak, (long)data[1].timeStamp);
             }
 
             if (mOutputTextView1.getLineCount() > 2)
@@ -125,8 +141,8 @@ public class CalibrationActivity extends Activity {
             double epsilon = Double.parseDouble(mEtEpsilon.getText().toString());
 
             DataProcessor.setY(y);
-            DataProcessor.setPeak(Peak);
-            DataProcessor.setEpsilon(epsilon);
+            DataProcessor.setmPeakThreshold(Peak);
+            DataProcessor.setmEpsilon(epsilon);
 
         } catch (NumberFormatException e) {
             Toast.makeText(this, "Wrong data", Toast.LENGTH_SHORT).show();
