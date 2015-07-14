@@ -13,7 +13,7 @@ public class DataProcessor {
 
     //region Algorithm
     private static double mY = 9.0;
-    private static double mPeakThreshold = 200000.0;
+    private static double mPeakThreshold = 20.0;
     private static double mEpsilon = 0.5;
 
     private ArrayList<Double>[] mPeakData;
