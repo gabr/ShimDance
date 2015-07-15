@@ -4,10 +4,16 @@ import android.app.Activity;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+
+import static com.arekaga.shimdance.Arrow.Type.*;
 
 
 public class GameActivity extends Activity implements CanvasView.SelectedArrowChangeListener{
@@ -18,7 +24,6 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
     private Track mTrack;
 
     private CountDownTimer mTimer;
-    private long mCurrentDuration;
 
     private int mScore;
     private boolean mIsEnd = false;
@@ -30,6 +35,57 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
     private TextView mScoreView;
     private ImageButton mPlayPauseButton;
     private CanvasView mCanvasView;
+
+    private static final int MOTION_DATA_SIZE = 10;
+    private static String[] mMotionData = new String[] {"", ""};
+    private Handler mHanlder = new Handler() {
+
+        public void handleMessage(Message msg) {
+            // obtain data from msg
+            CalibratedData[] data = (CalibratedData[]) msg.obj;
+
+            for (int i = 0; i < 2; i++) {
+                if (data[i] == null || data[i].direction == null) {
+                    mMotionData[i] = mMotionData[i].substring(1);
+                    continue;
+                }
+
+                mMotionData[i] += data[i].direction;
+
+                char prev = '\0';
+                char curr = '\0';
+                String result = "";
+                for (int j =0; j < mMotionData[i].length(); j++) {
+                    curr = mMotionData[i].charAt(j);
+                    if (curr == 'N' || curr == 'P') {
+                        if (prev != curr) {
+                            result += curr;
+                        }
+                        prev = curr;
+                    } else {
+                        result += curr;
+                    }
+                }
+
+                mMotionData[i] = result;
+
+                if (mMotionData[i].length() > MOTION_DATA_SIZE) {
+                    mMotionData[i] = mMotionData[i].substring(mMotionData[i].length() - MOTION_DATA_SIZE);
+                }
+            }
+
+            if (mSelectedArrow != null) {
+                String letter = getLetterRepresentation(mSelectedArrow.getType());
+                for (int i = 0; i < 2; i++) {
+                    if (mMotionData[i].contains(letter) && mMotionData[i].contains("P") && mMotionData[i].contains("N")) {
+                        acceptArrow();
+                        mSelectedArrow = null;
+                    }
+                }
+            }
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +116,8 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
             mPlayer = MediaPlayer.create(this, mTrack.resource);
         }
 
-        // set duration
-        mCurrentDuration = mPlayer.getDuration();
+        DataProcessor.removeHandler(mHanlder);
+        DataProcessor.addHandler(mHanlder);
 
         // start the game
         start();
@@ -97,8 +153,6 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
                 long min = l/(1000*60);
                 long sec = l/1000 - min*60;
                 mTrackTime.setText(min + ":" + ((sec < 10) ? "0" : "") + sec);
-
-                mCurrentDuration = l;
             }
 
             @Override
@@ -123,6 +177,7 @@ public class GameActivity extends Activity implements CanvasView.SelectedArrowCh
 
         if (!mPlayer.isPlaying()) {
             mPlayer.start();
+            mCanvasView.setOnSelectedArrowChangeListener(this);
         }
 
         mCanvasView.start();

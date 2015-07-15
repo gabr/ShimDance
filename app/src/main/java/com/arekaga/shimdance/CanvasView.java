@@ -69,7 +69,7 @@ public class CanvasView extends View {
     private static final int INIT_X = 200;
     private static final int END_X = 90;
     private static final float TEXT_SIZE = 70;
-    private static final double INIT_END = 3.5;
+    private static final double INIT_END = 5.5;
 
     private int mScore;
     private static double mInitCounter = 1.0;
@@ -235,9 +235,15 @@ public class CanvasView extends View {
             }
         }
 
-        mSelectedArrow = null;
-        if (mSelectedArrowChangeListener != null) {
-            mSelectedArrowChangeListener.onSelectedArrowChange(mSelectedArrow);
+        if (mSelectedArrow != null) {
+            if (mSelectedArrowChangeListener != null) {
+                mSelectedArrowChangeListener.onSelectedArrowChange(null);
+            }
         }
+        mSelectedArrow = null;
+    }
+
+    public void setOnSelectedArrowChangeListener(SelectedArrowChangeListener listener) {
+        mSelectedArrowChangeListener = listener;
     }
 }

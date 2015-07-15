@@ -13,7 +13,7 @@ public class DataProcessor {
 
     //region Algorithm
     private static double mY = 9.0;
-    private static double mPeakThreshold = 20.0;
+    private static double mPeakThreshold = 4000.0;
     private static double mEpsilon = 0.5;
 
     private ArrayList<Double>[] mPeakData;
@@ -162,16 +162,16 @@ public class DataProcessor {
             mAccelY[m_processingBuffer[i].id].add(m_processingBuffer[i].accelY);
             mAccelZ[m_processingBuffer[i].id].add(m_processingBuffer[i].accelZ);
 
-            if (mTimeStamp[m_processingBuffer[i].id].size() > mWindowWidth) {
+            if (mTimeStamp[m_processingBuffer[i].id].size() > 2*mWindowWidth) {
                 mTimeStamp[m_processingBuffer[i].id].remove(0);
                 mAccelX[m_processingBuffer[i].id].remove(0);
                 mAccelY[m_processingBuffer[i].id].remove(0);
                 mAccelZ[m_processingBuffer[i].id].remove(0);
 
                 // filter data
-                m_processingBuffer[i].accelX = convolution(mWindowWidth - (mWindowWidth/4), mAccelX[m_processingBuffer[i].id], mFilter);
-                m_processingBuffer[i].accelY = convolution(mWindowWidth - (mWindowWidth/4), mAccelY[m_processingBuffer[i].id], mFilter);
-                m_processingBuffer[i].accelZ = convolution(mWindowWidth - (mWindowWidth/4), mAccelZ[m_processingBuffer[i].id], mFilter);
+                m_processingBuffer[i].accelX = convolution(mWindowWidth, mAccelX[m_processingBuffer[i].id], mWindowMovingAverrage);
+                m_processingBuffer[i].accelY = convolution(mWindowWidth, mAccelY[m_processingBuffer[i].id], mWindowMovingAverrage);
+                m_processingBuffer[i].accelZ = convolution(mWindowWidth, mAccelZ[m_processingBuffer[i].id], mWindowMovingAverrage);
             }
 
             // calculate direction
@@ -292,9 +292,10 @@ public class DataProcessor {
         String result = "";
 
         double peak = convolution(mWindowWidth, mPeakData[id], mWindowMovingAverrage);
+
         if (peak >= mPeakThreshold) {
             result = "P";
-        } else {
+        } else if (peak <= mPeakThreshold){
             result = "N";
         }
 
@@ -322,9 +323,9 @@ public class DataProcessor {
 
             if (diff > mEpsilon) {
                 if (Math.abs(x) > Math.abs(z)) {
-                    result += x > 0 ? " r " : " l ";
+                    result += x > 0 ? "r" : "l";
                 } else {
-                    result += z > 0 ? " f " : " b ";
+                    result += z > 0 ? "f" :  "b";
                 }
             }
         }

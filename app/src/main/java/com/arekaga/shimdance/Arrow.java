@@ -26,6 +26,21 @@ public class Arrow {
 
             return null;
         }
+
+        public static String getLetterRepresentation(Type type) {
+            switch (type) {
+                case left:
+                    return "l";
+                case up:
+                    return "f";
+                case down:
+                    return "b";
+                case right:
+                    return "f";
+            }
+
+            return null;
+        }
     }
 
     private static final float mArrowPercentageWidth = 0.2f;

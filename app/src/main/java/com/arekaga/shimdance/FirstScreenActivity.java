@@ -245,7 +245,17 @@ public class FirstScreenActivity extends Activity {
 
                 case FirstScreenActivity.BREAK:
                     mConnectTimeoutThread.interrupt();
-                    mSensorDeviceManager.stopShimmer();
+                    // disconnect if there are already connected devices
+                    if (mSelectedDevices != null && !mSelectedDevices.isEmpty()) {
+                        try {
+                            if (mSelectedDevices != null) {
+                                mSensorDeviceManager.stopShimmer();
+                            }
+                        } catch (Exception e) {
+                            Toast.makeText(getApplicationContext(), "Error while stopping previous connection!", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                    }
                     break;
             }
 
@@ -392,9 +402,12 @@ public class FirstScreenActivity extends Activity {
         // disconnect if there are already connected devices
         if (mSelectedDevices != null && !mSelectedDevices.isEmpty()) {
             try {
-                mSensorDeviceManager.stopShimmer();
+                if (mSelectedDevices != null) {
+                    mSensorDeviceManager.stopShimmer();
+                }
             } catch (Exception e) {
                 Toast.makeText(this, "Error while stopping previous connection!", Toast.LENGTH_LONG).show();
+                return;
             }
         }
 
@@ -418,9 +431,14 @@ public class FirstScreenActivity extends Activity {
 
         // two devices are selected so try to connect with them
         //set device managers
-        mSensorDeviceManager = new SensorDeviceManager(this, mSelectedDevices, mBluetoothAdapter, mInternalSensors, mAccelRanges, mSamplingRates, samplingRate, mOnConnected);
-        //start SHIMMER sensor
-        mSensorDeviceManager.startShimmer();
+        try {
+            mSensorDeviceManager = new SensorDeviceManager(this, mSelectedDevices, mBluetoothAdapter, mInternalSensors, mAccelRanges, mSamplingRates, samplingRate, mOnConnected);
+            //start SHIMMER sensor
+            mSensorDeviceManager.startShimmer();
+        } catch (Exception e) {
+            Toast.makeText(this, "Error while starting connection!", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         mIsConnecting = true;
 
